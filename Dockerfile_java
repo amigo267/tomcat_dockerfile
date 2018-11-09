@@ -1,0 +1,28 @@
+FROM centos:7
+MAINTAINER amigo.xu
+RUN yum install gcc gcc-c++ make openssl-devel pcre-devel unzip -y
+ADD jdk1.6.0_27.zip /usr/local
+RUN  unzip /usr/local/jdk1.6.0_27.zip -d /usr/local
+
+ENV JAVA_HOME /usr/local/jdk1.6.0_27
+
+ADD apache-tomcat-7.0.26.zip /usr/local
+RUN  unzip /usr/local/apache-tomcat-7.0.26.zip  -d /usr/local
+COPY server.xml /usr/local/apache-tomcat-7.0.26/conf/
+COPY catalina.sh /usr/local/apache-tomcat-7.0.26/bin/
+RUN chmod +x /usr/local/apache-tomcat-7.0.26/bin/* && \
+    chmod +x /usr/local/jdk1.6.0_27/bin/* && \
+    chmod +x /usr/local/jdk1.6.0_27/jre/bin/* && \
+    mkdir /data
+ADD cronolog-1.6.2.tar.gz /usr/local
+RUN cd /usr/local/cronolog-1.6.2 && \
+    ./configure && \
+    make && \
+    make install
+RUN rm -rf /usr/loacl/*.tar.gz /usr/loacl/*.zip
+
+RUN  sed -i 's#securerandom.source=file:/dev/./urandom#securerandom.source=file:/dev/urandom#g'  /usr/local/jdk1.6.0_27/jre/lib/security/java.security
+WORKDIR /usr/local/apache-tomcat-7.0.26
+
+EXPOSE 8080
+ENTRYPOINT /usr/local/apache-tomcat-7.0.26/bin/startup.sh
